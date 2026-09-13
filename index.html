@@ -242,16 +242,17 @@
             touch-action: none;
             cursor: crosshair;
             background-image:
-                linear-gradient(to bottom, rgba(183, 185, 192, 0.45) 0 1px, transparent 1px 100%),
-                linear-gradient(to bottom, rgba(227, 228, 231, 0.65) 0 1px, transparent 1px 100%);
-            background-size: 100% 64px, 100% 16px;
+                linear-gradient(to bottom, rgba(227, 228, 231, 0.8) 0 1px, transparent 1px 100%),
+                linear-gradient(to bottom, rgba(227, 228, 231, 0.25) 0 1px, transparent 1px 100%);
+            background-size: 100% 96px, 100% 16px;
         }
 
         @media (prefers-color-scheme: dark) {
             .col {
                 background-image:
-                    linear-gradient(to bottom, rgba(131, 134, 142, 0.45) 0 1px, transparent 1px 100%),
-                    linear-gradient(to bottom, rgba(51, 53, 59, 0.65) 0 1px, transparent 1px 100%);
+                    linear-gradient(to bottom, rgba(51, 53, 59, 0.8) 0 1px, transparent 1px 100%),
+                    linear-gradient(to bottom, rgba(51, 53, 59, 0.25) 0 1px, transparent 1px 100%);
+                background-size: 100% 96px, 100% 16px;
             }
         }
 
@@ -394,7 +395,7 @@
         (function () {
             var DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
             var FULL = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-            var START = 360, END = 1380, SLOT = 15, SPX = 16, HOUR = 64, NSLOTS = (END - START) / SLOT, BH = NSLOTS * SPX;
+            var START = 360, END = 1380, SLOT = 10, SPX = 16, HOUR = 96, NSLOTS = (END - START) / SLOT, BH = NSLOTS * SPX;
             var COLORS = ['--c1', '--c2', '--c3', '--c4', '--c5'];
             var KEY = 'weekly-timetable-v1';
             var now = new Date();
@@ -471,7 +472,7 @@
                 });
                 edSw.appendChild(b);
             });
-            var DURS = [15, 30, 45, 60, 75, 90, 120, 150, 180, 240, 300, 360];
+            var DURS = [10, 20, 30, 40, 50, 60, 80, 100, 120, 150, 180, 240, 300, 360];
             edDur.addEventListener('change', function () {
                 var ev = find(sel); if (!ev) return;
                 ev.dur = clamp(parseInt(edDur.value, 10) || SLOT, SLOT, END - ev.start); save(); render();
