@@ -80,6 +80,21 @@
             color: var(--text-tertiary)
         }
 
+        #exportPdf {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 6px 12px;
+            background: var(--surface-muted);
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.2s
+        }
+
+        #exportPdf:hover {
+            background: var(--border)
+        }
+
         .ed {
             display: flex;
             flex-wrap: wrap;
@@ -227,9 +242,17 @@
             touch-action: none;
             cursor: crosshair;
             background-image:
-                linear-gradient(to bottom, color-mix(in srgb, var(--text-quaternary) 45%, transparent) 0 1px, transparent 1px 100%),
-                linear-gradient(to bottom, color-mix(in srgb, var(--border) 65%, transparent) 0 1px, transparent 1px 100%);
+                linear-gradient(to bottom, rgba(183, 185, 192, 0.45) 0 1px, transparent 1px 100%),
+                linear-gradient(to bottom, rgba(227, 228, 231, 0.65) 0 1px, transparent 1px 100%);
             background-size: 100% 64px, 100% 16px;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .col {
+                background-image:
+                    linear-gradient(to bottom, rgba(131, 134, 142, 0.45) 0 1px, transparent 1px 100%),
+                    linear-gradient(to bottom, rgba(51, 53, 59, 0.65) 0 1px, transparent 1px 100%);
+            }
         }
 
         .ev {
@@ -286,13 +309,19 @@
             display: none;
             border: 1.5px dashed var(--text-primary);
             border-radius: 6px;
-            background: color-mix(in srgb, var(--text-primary) 8%, transparent);
+            background: rgba(27, 28, 31, 0.08);
             pointer-events: none;
             z-index: 7;
             font-size: 11px;
             padding: 2px 6px;
             color: var(--text-secondary);
             font-variant-numeric: tabular-nums
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .dr {
+                background: rgba(233, 233, 236, 0.08);
+            }
         }
 
         .now {
@@ -325,6 +354,7 @@
         <h3 id="weekLabel">Weekly Schedule</h3>
         <div class="hint">click an empty cell to add &middot; drag on empty space to paint a length &middot; drag an
             activity to move it &middot; drag its bottom edge to resize</div>
+        <button id="exportPdf" title="Export to PDF">📥 PDF</button>
     </div>
 
     <div class="ed" id="editor" hidden>
@@ -405,13 +435,20 @@
             var nid = evs.reduce(function (m, e) { return Math.max(m, e.id || 0) }, 0) + 1;
             function save() { try { localStorage.setItem(KEY, JSON.stringify(evs)) } catch (e) { } }
 
+            var colorMap = {
+                '--c1': 'rgba(59, 130, 246, 0.16)',
+                '--c2': 'rgba(229, 72, 77, 0.16)',
+                '--c3': 'rgba(47, 158, 99, 0.16)',
+                '--c4': 'rgba(139, 92, 246, 0.16)',
+                '--c5': 'rgba(138, 143, 152, 0.16)'
+            };
             function evEl(ev) {
                 var d = document.createElement('div');
                 d.className = 'ev' + (sel === ev.id ? ' sel' : '');
                 d.dataset.id = ev.id;
                 d.style.top = ((ev.start - START) / SLOT * SPX) + 'px';
                 d.style.height = (ev.dur / SLOT * SPX) + 'px';
-                d.style.background = 'color-mix(in srgb, var(' + ev.color + ') 16%, transparent)';
+                d.style.background = colorMap[ev.color] || colorMap['--c1'];
                 d.style.borderLeftColor = 'var(' + ev.color + ')';
                 var n = document.createElement('span'); n.className = 'en'; n.textContent = ev.name || 'Activity';
                 var t = document.createElement('span'); t.className = 'et'; t.textContent = fmt(ev.start) + ' – ' + fmt(ev.start + ev.dur);
@@ -557,6 +594,52 @@
 
             render();
         })();
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <script>
+        document.getElementById('exportPdf').addEventListener('click', async function () {
+            try {
+                var btn = this;
+                var originalText = btn.textContent;
+                btn.textContent = '⏳ Generating...';
+                btn.disabled = true;
+
+                var scroll = document.getElementById('scroll');
+                var canvas = await html2canvas(scroll, {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: '#ffffff'
+                });
+
+                var imgData = canvas.toDataURL('image/png');
+                var imgWidth = 297 - 20; // A4 landscape minus margins
+                var imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+                var jsPDF = window.jspdf.jsPDF;
+                var pdf = new jsPDF({
+                    orientation: 'landscape',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+
+                pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+                pdf.save('weekly-schedule.pdf');
+
+                btn.textContent = originalText;
+                btn.disabled = false;
+            } catch (err) {
+                console.error('PDF export failed:', err);
+                btn.textContent = '❌ Error';
+                setTimeout(function () {
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+                }, 2000);
+            }
+        });
     </script>
 </body>
 
