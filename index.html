@@ -322,7 +322,7 @@
 <body>
 
     <div class="tb">
-        <h3 id="weekLabel">Week</h3>
+        <h3 id="weekLabel">Weekly Schedule</h3>
         <div class="hint">click an empty cell to add &middot; drag on empty space to paint a length &middot; drag an
             activity to move it &middot; drag its bottom edge to resize</div>
     </div>
@@ -375,13 +375,10 @@
             function fmt(m) { var h = Math.floor(m / 60), mm = m % 60; return h + ':' + (mm < 10 ? '0' : '') + mm }
             function fmtDur(m) { var h = Math.floor(m / 60), mm = m % 60; return h ? (mm ? h + 'h ' + mm + 'm' : h + 'h') : mm + 'm' }
 
-            $('weekLabel').textContent = 'Week of ' + mon.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
-
             var head = $('head'), body = $('body'), gutter = $('gutter'), cols = [];
             for (var i = 0; i < 7; i++) {
                 var d = document.createElement('div'); d.className = 'day' + (i === todayIdx ? ' today' : '');
-                var dt = new Date(mon); dt.setDate(mon.getDate() + i);
-                d.innerHTML = DAYS[i] + '<span>' + dt.getDate() + '</span>';
+                d.textContent = DAYS[i];
                 head.appendChild(d);
                 var c = document.createElement('div'); c.className = 'col'; c.dataset.d = i;
                 body.appendChild(c); cols.push(c);
