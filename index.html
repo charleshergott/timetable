@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weekly timetable</title>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --text-primary: #1b1c1f;
+            --text-secondary: #4b4d52;
+            --text-tertiary: #7d8087;
+            --text-quaternary: #b6b9c0;
+            --surface-muted: #f4f5f6;
+            --border: #e3e4e7;
+            --danger: #d9353c;
+            --c1: #3b82f6;
+            --c2: #e5484d;
+            --c3: #2f9e63;
+            --c4: #8b5cf6;
+            --c5: #8a8f98;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #17181b;
+                --text-primary: #e9e9ec;
+                --text-secondary: #b6b8bf;
+                --text-tertiary: #83868e;
+                --text-quaternary: #4d5058;
+                --surface-muted: #212227;
+                --border: #33353b;
+                --danger: #ef5c62;
+                --c1: #5b9dff;
+                --c2: #f0616a;
+                --c3: #45bd7d;
+                --c4: #a379ff;
+                --c5: #9aa0aa;
+            }
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            background: var(--bg);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-size: 14px;
+            line-height: 20px;
+        }
+
+        button,
+        input,
+        select {
+            font: inherit
+        }
+
+        .tb {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 12px;
+            margin: 0 0 8px;
+            flex-wrap: wrap
+        }
+
+        .tb h3 {
+            margin: 0;
+            font-size: 17px;
+            font-weight: 600
+        }
+
+        .tb .hint {
+            font-size: 12px;
+            color: var(--text-tertiary)
+        }
+
+        .ed {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            margin-bottom: 8px;
+            background: var(--surface-muted)
+        }
+
+        .ed[hidden] {
+            display: none
+        }
+
+        .ed input[type=text] {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 4px 8px;
+            background: transparent;
+            color: var(--text-primary);
+            min-width: 150px;
+            outline: none
+        }
+
+        .ed input[type=text]:focus {
+            border-color: var(--text-primary)
+        }
+
+        .ed select {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 4px 8px;
+            background: var(--bg);
+            color: var(--text-primary)
+        }
+
+        .ed .when {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-variant-numeric: tabular-nums
+        }
+
+        .sw {
+            width: 16px;
+            height: 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            flex: none
+        }
+
+        .sw.sel {
+            outline: 2px solid var(--text-primary);
+            outline-offset: 2px
+        }
+
+        .del {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 4px 8px;
+            color: var(--danger);
+            cursor: pointer;
+            margin-left: auto
+        }
+
+        .sc {
+            overflow: auto;
+            border: 1px solid var(--border);
+            border-radius: 12px
+        }
+
+        .in {
+            min-width: 820px
+        }
+
+        .hd {
+            display: flex;
+            border-bottom: 1px solid var(--border)
+        }
+
+        .hd .g {
+            width: 52px;
+            flex: none
+        }
+
+        .day {
+            flex: 1;
+            min-width: 100px;
+            text-align: center;
+            padding: 8px 4px;
+            font-weight: 600;
+            font-size: 14px
+        }
+
+        .day span {
+            font-weight: 400;
+            color: var(--text-tertiary);
+            font-size: 12px;
+            margin-left: 4px;
+            font-variant-numeric: tabular-nums
+        }
+
+        .day.today {
+            box-shadow: inset 0 -2px 0 var(--text-primary)
+        }
+
+        .day.today span {
+            color: var(--text-primary);
+            font-weight: 500
+        }
+
+        .bd {
+            display: flex
+        }
+
+        .g {
+            width: 52px;
+            flex: none;
+            position: relative
+        }
+
+        .gl {
+            position: absolute;
+            right: 8px;
+            transform: translateY(-50%);
+            font-size: 12px;
+            color: var(--text-tertiary);
+            font-variant-numeric: tabular-nums
+        }
+
+        .col {
+            flex: 1;
+            min-width: 100px;
+            position: relative;
+            border-left: 1px solid var(--border);
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+            cursor: crosshair;
+            background-image:
+                linear-gradient(to bottom, color-mix(in srgb, var(--text-quaternary) 45%, transparent) 0 1px, transparent 1px 100%),
+                linear-gradient(to bottom, color-mix(in srgb, var(--border) 65%, transparent) 0 1px, transparent 1px 100%);
+            background-size: 100% 64px, 100% 16px;
+        }
+
+        .ev {
+            position: absolute;
+            left: 2px;
+            right: 2px;
+            border-radius: 6px;
+            padding: 2px 6px 2px 8px;
+            cursor: grab;
+            overflow: hidden;
+            border-left: 3px solid;
+            font-size: 12px;
+            line-height: 15px
+        }
+
+        .ev .en {
+            display: block;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis
+        }
+
+        .ev .et {
+            display: block;
+            color: var(--text-secondary);
+            font-size: 11px;
+            font-variant-numeric: tabular-nums
+        }
+
+        .ev.sel {
+            outline: 2px solid var(--text-primary);
+            outline-offset: 1px
+        }
+
+        .ev.drag {
+            cursor: grabbing;
+            z-index: 6
+        }
+
+        .rsz {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 8px;
+            cursor: ns-resize
+        }
+
+        .dr {
+            position: absolute;
+            left: 2px;
+            right: 2px;
+            display: none;
+            border: 1.5px dashed var(--text-primary);
+            border-radius: 6px;
+            background: color-mix(in srgb, var(--text-primary) 8%, transparent);
+            pointer-events: none;
+            z-index: 7;
+            font-size: 11px;
+            padding: 2px 6px;
+            color: var(--text-secondary);
+            font-variant-numeric: tabular-nums
+        }
+
+        .now {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--danger);
+            pointer-events: none;
+            z-index: 5;
+            display: none
+        }
+
+        .now::before {
+            content: "";
+            position: absolute;
+            left: -3px;
+            top: -2.5px;
+            width: 7px;
+            height: 7px;
+            border-radius: 8px;
+            background: var(--danger)
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="tb">
+        <h3 id="weekLabel">Week</h3>
+        <div class="hint">click an empty cell to add &middot; drag on empty space to paint a length &middot; drag an
+            activity to move it &middot; drag its bottom edge to resize</div>
+    </div>
+
+    <div class="ed" id="editor" hidden>
+        <input type="text" id="edName" placeholder="Activity name" maxlength="60">
+        <span id="edSw"></span>
+        <select id="edDur"></select>
+        <span class="when" id="edWhen"></span>
+        <button class="del" id="edDel" title="Delete activity"><svg width="14" height="14" viewBox="0 0 24 24"
+                fill="none">
+                <path
+                    d="M8.10001 3C8.10001 2.50294 8.50295 2.1 9.00001 2.1H15C15.4971 2.1 15.9 2.50294 15.9 3C15.9 3.49706 15.4971 3.9 15 3.9H9.00001C8.50295 3.9 8.10001 3.49706 8.10001 3Z"
+                    fill="currentColor" />
+                <path
+                    d="M10 15.9C9.50295 15.9 9.10001 15.4971 9.10001 15L9.10001 10C9.10001 9.50294 9.50295 9.1 10 9.1C10.4971 9.1 10.9 9.50294 10.9 10L10.9 15C10.9 15.4971 10.4971 15.9 10 15.9Z"
+                    fill="currentColor" />
+                <path
+                    d="M14 15.9C13.5029 15.9 13.1 15.4971 13.1 15L13.1 10C13.1 9.50294 13.5029 9.1 14 9.1C14.4971 9.1 14.9 9.50294 14.9 10L14.9 15C14.9 15.4971 14.4971 15.9 14 15.9Z"
+                    fill="currentColor" />
+                <path
+                    d="M4.6 5.1H19.4C19.8971 5.1 20.3 5.50294 20.3 6C20.3 6.49706 19.8971 6.9 19.4 6.9H18.6L18.0045 19.1545C17.9564 20.1928 17.0913 21 16.0516 21H7.94841C6.90874 21 6.04359 20.1928 5.99553 19.1545L5.4 6.9H4.6C4.10294 6.9 3.7 6.49706 3.7 6C3.7 5.50294 4.10294 5.1 4.6 5.1Z"
+                    fill="currentColor" />
+            </svg>Delete</button>
+    </div>
+
+    <div class="sc" id="scroll">
+        <div class="in">
+            <div class="hd" id="head">
+                <div class="g"></div>
+            </div>
+            <div class="bd" id="body">
+                <div class="g" id="gutter"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            var DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            var FULL = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+            var START = 360, END = 1380, SLOT = 15, SPX = 16, HOUR = 64, NSLOTS = (END - START) / SLOT, BH = NSLOTS * SPX;
+            var COLORS = ['--c1', '--c2', '--c3', '--c4', '--c5'];
+            var KEY = 'weekly-timetable-v1';
+            var now = new Date();
+            var todayIdx = (now.getDay() + 6) % 7;
+            var mon = new Date(now); mon.setDate(now.getDate() - todayIdx);
+            function $(id) { return document.getElementById(id) }
+            function clamp(v, a, b) { return Math.max(a, Math.min(b, v)) }
+            function fmt(m) { var h = Math.floor(m / 60), mm = m % 60; return h + ':' + (mm < 10 ? '0' : '') + mm }
+            function fmtDur(m) { var h = Math.floor(m / 60), mm = m % 60; return h ? (mm ? h + 'h ' + mm + 'm' : h + 'h') : mm + 'm' }
+
+            $('weekLabel').textContent = 'Week of ' + mon.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+
+            var head = $('head'), body = $('body'), gutter = $('gutter'), cols = [];
+            for (var i = 0; i < 7; i++) {
+                var d = document.createElement('div'); d.className = 'day' + (i === todayIdx ? ' today' : '');
+                var dt = new Date(mon); dt.setDate(mon.getDate() + i);
+                d.innerHTML = DAYS[i] + '<span>' + dt.getDate() + '</span>';
+                head.appendChild(d);
+                var c = document.createElement('div'); c.className = 'col'; c.dataset.d = i;
+                body.appendChild(c); cols.push(c);
+            }
+            for (var h = 6; h <= 23; h++) {
+                var l = document.createElement('div'); l.className = 'gl'; l.style.top = ((h - 6) * HOUR) + 'px'; l.textContent = fmt(h * 60);
+                gutter.appendChild(l);
+            }
+            gutter.style.height = BH + 'px'; cols.forEach(function (c) { c.style.height = BH + 'px' });
+
+            var nowLine = document.createElement('div'); nowLine.className = 'now';
+            var draft = document.createElement('div'); draft.className = 'dr';
+
+            var evs = [], sel = null;
+            try { var s = JSON.parse(localStorage.getItem(KEY)); if (Array.isArray(s)) evs = s.filter(function (e) { return e && e.day >= 0 && e.day < 7 && e.start >= START && e.start < END && e.dur >= SLOT }); } catch (e) { }
+            if (!evs.length && localStorage.getItem(KEY) === null) {
+                evs = [
+                    { id: 1, day: 0, start: 420, dur: 60, name: 'Morning run', color: '--c3' },
+                    { id: 2, day: 1, start: 540, dur: 120, name: 'Deep work', color: '--c1' },
+                    { id: 3, day: 2, start: 1080, dur: 90, name: 'Gym', color: '--c2' },
+                    { id: 4, day: 6, start: 840, dur: 45, name: 'Meal prep', color: '--c4' }
+                ];
+            }
+            var nid = evs.reduce(function (m, e) { return Math.max(m, e.id || 0) }, 0) + 1;
+            function save() { try { localStorage.setItem(KEY, JSON.stringify(evs)) } catch (e) { } }
+
+            function evEl(ev) {
+                var d = document.createElement('div');
+                d.className = 'ev' + (sel === ev.id ? ' sel' : '');
+                d.dataset.id = ev.id;
+                d.style.top = ((ev.start - START) / SLOT * SPX) + 'px';
+                d.style.height = (ev.dur / SLOT * SPX) + 'px';
+                d.style.background = 'color-mix(in srgb, var(' + ev.color + ') 16%, transparent)';
+                d.style.borderLeftColor = 'var(' + ev.color + ')';
+                var n = document.createElement('span'); n.className = 'en'; n.textContent = ev.name || 'Activity';
+                var t = document.createElement('span'); t.className = 'et'; t.textContent = fmt(ev.start) + ' – ' + fmt(ev.start + ev.dur);
+                d.appendChild(n);
+                if (ev.dur >= 30) d.appendChild(t);
+                var r = document.createElement('div'); r.className = 'rsz'; d.appendChild(r);
+                return d;
+            }
+            function render() {
+                cols.forEach(function (c) { Array.prototype.slice.call(c.children).forEach(function (n) { if (n.classList.contains('ev')) c.removeChild(n) }) });
+                evs.forEach(function (ev) { cols[ev.day].appendChild(evEl(ev)) });
+                syncEditor(); placeNow();
+            }
+
+            var ed = $('editor'), edName = $('edName'), edDur = $('edDur'), edWhen = $('edWhen'), edSw = $('edSw'), edDel = $('edDel');
+            COLORS.forEach(function (c) {
+                var b = document.createElement('button'); b.className = 'sw'; b.dataset.c = c; b.title = 'Color';
+                b.style.background = 'var(' + c + ')'; b.addEventListener('click', function () {
+                    var ev = find(sel); if (!ev) return; ev.color = c; save(); render();
+                });
+                edSw.appendChild(b);
+            });
+            var DURS = [15, 30, 45, 60, 75, 90, 120, 150, 180, 240, 300, 360];
+            edDur.addEventListener('change', function () {
+                var ev = find(sel); if (!ev) return;
+                ev.dur = clamp(parseInt(edDur.value, 10) || SLOT, SLOT, END - ev.start); save(); render();
+            });
+            edName.addEventListener('input', function () {
+                var ev = find(sel); if (!ev) return; ev.name = edName.value; save();
+                var el = cols[ev.day].querySelector('.ev[data-id="' + ev.id + '"] .en');
+                if (el) el.textContent = ev.name || 'Activity';
+            });
+            edDel.addEventListener('click', function () {
+                evs = evs.filter(function (e) { return e.id !== sel }); sel = null; save(); render();
+            });
+            document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { sel = null; render() } });
+
+            function find(id) { for (var i = 0; i < evs.length; i++)if (evs[i].id === id) return evs[i]; return null }
+            function syncEditor() {
+                var ev = find(sel);
+                ed.hidden = !ev;
+                if (!ev) return;
+                if (document.activeElement !== edName) edName.value = ev.name || '';
+                edDur.innerHTML = '';
+                var opts = DURS.indexOf(ev.dur) >= 0 ? DURS : DURS.concat([ev.dur]).sort(function (a, b) { return a - b });
+                opts.forEach(function (v) {
+                    var o = document.createElement('option'); o.value = v; o.textContent = fmtDur(v); if (v === ev.dur) o.selected = true; edDur.appendChild(o);
+                });
+                edWhen.textContent = FULL[ev.day] + '  ' + fmt(ev.start) + ' – ' + fmt(ev.start + ev.dur);
+                Array.prototype.forEach.call(edSw.children, function (b) { b.classList.toggle('sel', b.dataset.c === ev.color) });
+            }
+
+            function select(id, focus) {
+                sel = id; render();
+                if (focus) { edName.focus(); edName.select() }
+            }
+
+            function placeNow() {
+                nowLine.style.display = 'none';
+                var m = now.getHours() * 60 + now.getMinutes();
+                if (m < START || m >= END) return;
+                cols[todayIdx].appendChild(nowLine);
+                nowLine.style.top = ((m - START) / SLOT * SPX) + 'px';
+                nowLine.style.display = 'block';
+            }
+            setInterval(function () { now = new Date(); placeNow() }, 30000);
+
+            function createAt(day, start, dur) {
+                start = clamp(Math.round(start / SLOT) * SLOT, START, END - SLOT);
+                dur = clamp(Math.round(dur / SLOT) * SLOT, SLOT, END - start);
+                var ev = { id: nid++, day: day, start: start, dur: dur, name: '', color: COLORS[evs.length % COLORS.length] };
+                evs.push(ev); save(); select(ev.id, true);
+            }
+
+            cols.forEach(function (col) {
+                col.addEventListener('pointerdown', function (e) {
+                    if (e.button !== undefined && e.button !== 0) return;
+                    if (e.target.closest('.ev')) return;
+                    e.preventDefault();
+                    var di = +col.dataset.d;
+                    var top = col.getBoundingClientRect().top;
+                    var s0 = clamp(Math.floor((e.clientY - top) / SPX), 0, NSLOTS - 1), s1 = s0, moved = false;
+                    col.appendChild(draft); draft.style.display = 'block';
+                    function draw() {
+                        var a = Math.min(s0, s1), b = Math.max(s0, s1);
+                        draft.style.top = (a * SPX) + 'px'; draft.style.height = ((b - a + 1) * SPX) + 'px';
+                        draft.textContent = fmt(a * SLOT + START) + ' – ' + fmt((b + 1) * SLOT + START);
+                    }
+                    draw();
+                    function mv(ev) {
+                        var s = clamp(Math.floor((ev.clientY - top) / SPX), 0, NSLOTS - 1);
+                        if (s !== s1) { s1 = s; moved = true; draw() }
+                    }
+                    function up() {
+                        window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up);
+                        draft.style.display = 'none';
+                        var a = Math.min(s0, s1), dur = (Math.max(s0, s1) - a + 1) * SLOT;
+                        if (!moved) dur = 60;
+                        createAt(di, a * SLOT + START, dur);
+                    }
+                    window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up);
+                });
+            });
+
+            body.addEventListener('pointerdown', function (e) {
+                var el = e.target.closest('.ev'); if (!el) return;
+                e.preventDefault();
+                var ev = find(+el.dataset.id); if (!ev) return;
+                var mode = e.target.closest('.rsz') ? 'resize' : 'move';
+                var x0 = e.clientX, y0 = e.clientY;
+                var day0 = ev.day, start0 = ev.start, dur0 = ev.dur;
+                var colW = cols[0].getBoundingClientRect().width;
+                var nday = day0, ns = start0, nd = dur0, moved = false;
+                el.classList.add('drag');
+                var et = el.querySelector('.et');
+                function mv(ev2) {
+                    var dx = ev2.clientX - x0, dy = ev2.clientY - y0;
+                    if (!moved && Math.abs(dx) < 4 && Math.abs(dy) < 4) return;
+                    moved = true;
+                    if (mode === 'move') {
+                        nday = clamp(day0 + Math.round(dx / colW), 0, 6);
+                        ns = clamp(start0 + Math.round(dy / SPX) * SLOT, START, END - dur0);
+                        el.style.transform = 'translate(' + ((nday - day0) * colW) + 'px,' + ((ns - start0) / SLOT * SPX) + 'px)';
+                        if (et) et.textContent = fmt(ns) + ' – ' + fmt(ns + dur0);
+                    } else {
+                        nd = clamp(dur0 + Math.round(dy / SPX) * SLOT, SLOT, END - start0);
+                        el.style.height = (nd / SLOT * SPX) + 'px';
+                        if (et) et.textContent = fmt(start0) + ' – ' + fmt(start0 + nd);
+                    }
+                }
+                function up() {
+                    window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up);
+                    el.classList.remove('drag'); el.style.transform = '';
+                    if (moved) {
+                        if (mode === 'move') { ev.day = nday; ev.start = ns }
+                        else { ev.dur = nd }
+                        save();
+                    }
+                    select(ev.id, false);
+                }
+                window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up);
+            });
+
+            render();
+        })();
+    </script>
+</body>
+
+</html>
